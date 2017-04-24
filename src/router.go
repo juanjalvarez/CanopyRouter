@@ -34,8 +34,11 @@ type Route struct {
 
 func (r *Route) ToHandler() (func (http.ResponseWriter, *http.Request)) {
 	return func (rw http.ResponseWriter, req *http.Request) {
-		r.ResolveRoute(req.URL.Path, &rw, req)
+		r.ResolveRoute(&rw, req)
 	}
+}
+
+func (r *Route) resolveRoute(rw *http.ResponseWriter, req *http.Request) {
 }
 
 func NewRouter() *Route {
@@ -47,10 +50,6 @@ func NewRouter() *Route {
 	r.isWildcard = false
 	r.handlers = *(new(RouteHandlers))
 	return r
-}
-
-func (r *Route) ResolveRoute(path string, rw *http.ResponseWriter, req *http.Request) {
-	println("REQUEST MADE")
 }
 
 func (r *Route) HasMethod(method int) bool {
