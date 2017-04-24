@@ -6,16 +6,15 @@ import (
 	"fmt"
 )
 
-func test(rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
-
-}
-
 func main(){
 	a := canopy.NewRouter()
 	b := a.Fork("user")
 	c := b.Wildcard("username")
 	d := c.Fork("status")
-	d.RegisterHandler(canopy.GET, test)
+	d.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
+		println("REQUEST MADE")
+		(*rw).Write([]byte("Hello!"))
+	})
 	println()
 	a.Iterate(func (route *canopy.Route) {
 		path := route.String()

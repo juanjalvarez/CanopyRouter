@@ -3,7 +3,6 @@ package canopy
 import (
 	"net/http"
 	"strings"
-	"fmt"
 )
 
 const (
@@ -30,7 +29,7 @@ type Route struct {
 	name string
 	parent *Route
 	children map[string]*Route
-	isWildcard bool
+	wildcard *Route
 	handlers RouteHandlers
 }
 
@@ -40,7 +39,7 @@ func NewRouter() *Route {
 	r.name = "_root_"
 	r.parent = nil
 	r.children = make(map[string]*Route)
-	r.isWildcard = false
+	r.wildcard = nil
 	r.handlers = *(new(RouteHandlers))
 	return r
 }
@@ -51,26 +50,24 @@ func (r *Route) Fork(name string) *Route {
 	child.name = name
 	child.parent = r
 	r.children[name] = child
-	child.isWildcard = false
 	return child
 }
 
 func (r *Route) Wildcard(name string) *Route {
 	fork := r.Fork(":" + name)
-	fork.isWildcard = true
+	r.wildcard = fork
 	return fork
 }
 
 func (r *Route) ToHandler() (func (http.ResponseWriter, *http.Request)) {
 	return func (rw http.ResponseWriter, req *http.Request) {
-		r.resolveRoute(&rw, req)
+		r.parseRoute(rw, req)
 	}
 }
 
-func (r *Route) resolveRoute(rw *http.ResponseWriter, req *http.Request) {
+func (r *Route) parseRoute(rw http.ResponseWriter, req *http.Request) {
 	reqPath := req.URL.Path
 	path := strings.Split(reqPath, "/")
-	fmt.Printf("%v\n", path)
 	lo, hi := 0, len(path) - 1
 	if len(path[lo]) == 0 {
 		lo++
@@ -79,13 +76,57 @@ func (r *Route) resolveRoute(rw *http.ResponseWriter, req *http.Request) {
 		hi--
 	}
 	path = path[lo:hi + 1]
-	for _, val := range(path) {
-		fmt.Printf("'%s'\n", val)
+	wildcards := (make(Wildcards))
+	route := r.resolveRoute(path, 0, &wildcards)
+	if route == nil {
+		rw.WriteHeader(404)
+	} else {
+		method := methodCode(req.Method)
+		handler := r.handlers[method]
+		if handler != nil {
+			handler(&rw, req, wildcards)
+		} else {
+			rw.WriteHeader(405)
+		}
 	}
 }
 
-func (r *Route) findRoute(stack []string, idx int) {
+func (r *Route) resolveRoute(stack []string, idx int, wildcards *Wildcards) *Route {
+	cur := stack[idx]
+	child := r.children[cur]
+	if child == nil {
+		if r.wildcard != nil {
+			(*wildcards)[r.wildcard.name]=stack[idx]
+			if idx == len(stack) - 1 {
+				return r.wildcard
+			} else {
+				return r.wildcard.resolveRoute(stack, idx + 1, wildcards)
+			}
+		} else {
+			return nil
+		}
+	} else {
+		if idx == len(stack) - 1 {
+			return r
+		} else {
+			return child.resolveRoute(stack, idx + 1, wildcards)
+		}
+	}
+}
 
+func methodCode(method string) int {
+	switch (method) {
+		case "GET": return GET
+		case "HEAD" : return HEAD
+		case "POST": return POST
+		case "PUT": return PUT
+		case "DELETE": return DELETE
+		case "CONNECT": return CONNECT
+		case "OPTIONS": return OPTIONS
+		case "TRACE": return TRACE
+		case "PATCH": return PATCH
+		default: return -1
+	}
 }
 
 func (r *Route) HasMethod(method int) bool {
