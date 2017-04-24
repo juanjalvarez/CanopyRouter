@@ -6,9 +6,11 @@ import (
 
 func main(){
 	a := gorouter.NewRouter()
-	println(a.String())
 	b := a.Fork("test")
-	println(b.String())
 	c := b.Wildcard()
+	d := c.Fork("verify")
+	println(a.String())
+	println(b.String())
 	println(c.String())
+	println(d.String())
 }
