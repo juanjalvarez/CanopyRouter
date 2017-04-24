@@ -14,11 +14,12 @@ const (
 	OPTIONS = 6
 	TRACE = 7
 	PATCH = 8
+	METHOD_COUNT = PATCH + 1
 )
 
 type RouteHandler func(rw http.ResponseWriter, req *http.Request)
 
-type RouteHandlers [9]*RouteHandler
+type RouteHandlers [METHOD_COUNT]*RouteHandler
 
 type Route struct {
 	isRoot bool
@@ -26,6 +27,7 @@ type Route struct {
 	parent *Route
 	children []*Route
 	isWildcard bool
+	handlers RouteHandlers
 }
 
 func NewRouter() *Route {
@@ -48,8 +50,8 @@ func (rp *Route) Fork(name string) *Route {
 	return child
 }
 
-func (rp *Route) Wildcard() *Route {
-	fork := rp.Fork("*")
+func (rp *Route) Wildcard(name string) *Route {
+	fork := rp.Fork(":" + name)
 	fork.isWildcard = true
 	return fork
 }
