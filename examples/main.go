@@ -29,4 +29,6 @@ func main(){
 		fmt.Printf("%v %s\n", methods, path)
 	})
 	println()
+	http.HandleFunc("/", a.ToHandler())
+	http.ListenAndServe(":8080", nil)
 }

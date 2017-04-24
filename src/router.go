@@ -32,60 +32,70 @@ type Route struct {
 	handlers RouteHandlers
 }
 
-func NewRouter() *Route {
-	rp := new(Route)
-	rp.isRoot = true
-	rp.name = "_root_"
-	rp.parent = nil
-	rp.children = *(new([]*Route))
-	rp.isWildcard = false
-	rp.handlers = *(new(RouteHandlers))
-	return rp
+func (r *Route) ToHandler() (func (http.ResponseWriter, *http.Request)) {
+	return func (rw http.ResponseWriter, req *http.Request) {
+		r.ResolveRoute(req.URL.Path, &rw, req)
+	}
 }
 
-func (rp *Route) HasMethod(method int) bool {
-	if rp.handlers[method] != nil {
+func NewRouter() *Route {
+	r := new(Route)
+	r.isRoot = true
+	r.name = "_root_"
+	r.parent = nil
+	r.children = *(new([]*Route))
+	r.isWildcard = false
+	r.handlers = *(new(RouteHandlers))
+	return r
+}
+
+func (r *Route) ResolveRoute(path string, rw *http.ResponseWriter, req *http.Request) {
+	println("REQUEST MADE")
+}
+
+func (r *Route) HasMethod(method int) bool {
+	if r.handlers[method] != nil {
 		return true
 	} else {
 		return false
 	}
 }
 
-func (rp *Route) RegisterHandler(method int, handler RouteHandler) {
-	rp.handlers[method] = handler
+func (r *Route) RegisterHandler(method int, handler RouteHandler) {
+	r.handlers[method] = handler
 }
 
-func (rp *Route) Fork(name string) *Route {
+func (r *Route) Fork(name string) *Route {
 	child := NewRouter()
 	child.isRoot = false
 	child.name = name
-	child.parent = rp
-	rp.children = append(rp.children, child)
+	child.parent = r
+	r.children = append(r.children, child)
 	child.isWildcard = false
 	return child
 }
 
-func (rp *Route) Wildcard(name string) *Route {
-	fork := rp.Fork(":" + name)
+func (r *Route) Wildcard(name string) *Route {
+	fork := r.Fork(":" + name)
 	fork.isWildcard = true
 	return fork
 }
 
-func (rp *Route) String() string {
-	if rp.isRoot {
+func (r *Route) String() string {
+	if r.isRoot {
 		return "/"
 	}else {
-		name := rp.name
-		if len(rp.children) > 0 {
+		name := r.name
+		if len(r.children) > 0 {
 			name = name + "/"
 		}
-		return (*(rp.parent)).String() + name
+		return (*(r.parent)).String() + name
 	}
 }
 
-func (rp *Route) Iterate(handler func (route *Route)) {
-	handler(rp)
-	for _, child := range(rp.children) {
+func (r *Route) Iterate(handler func (route *Route)) {
+	handler(r)
+	for _, child := range(r.children) {
 		(*child).Iterate(handler)
 	}
 }
