@@ -17,9 +17,11 @@ const (
 	METHOD_COUNT = PATCH + 1
 )
 
-type RouteHandler func(rw http.ResponseWriter, req *http.Request)
+type Wildcards map[string]string
 
-type RouteHandlers [METHOD_COUNT]*RouteHandler
+type RouteHandler func(rw *http.ResponseWriter, req *http.Request, w Wildcards)
+
+type RouteHandlers [METHOD_COUNT]RouteHandler
 
 type Route struct {
 	isRoot bool
@@ -37,7 +39,20 @@ func NewRouter() *Route {
 	rp.parent = nil
 	rp.children = *(new([]*Route))
 	rp.isWildcard = false
+	rp.handlers = *(new(RouteHandlers))
 	return rp
+}
+
+func (rp *Route) HasMethod(method int) bool {
+	if rp.handlers[method] != nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (rp *Route) RegisterHandler(method int, handler RouteHandler) {
+	rp.handlers[method] = handler
 }
 
 func (rp *Route) Fork(name string) *Route {
@@ -65,5 +80,12 @@ func (rp *Route) String() string {
 			name = name + "/"
 		}
 		return (*(rp.parent)).String() + name
+	}
+}
+
+func (rp *Route) Iterate(handler func (route *Route)) {
+	handler(rp)
+	for _, child := range(rp.children) {
+		(*child).Iterate(handler)
 	}
 }
