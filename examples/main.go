@@ -12,8 +12,7 @@ func main(){
 	c := b.Wildcard("username")
 	d := c.Fork("status")
 	d.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
-		println("REQUEST MADE")
-		(*rw).Write([]byte("Hello!"))
+		(*rw).Write([]byte("Hello, " + w[":username"] +"!"))
 	})
 	println()
 	a.Iterate(func (route *canopy.Route) {
