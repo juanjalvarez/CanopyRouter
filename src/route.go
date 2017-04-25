@@ -20,7 +20,7 @@ type Route struct {
 	handlers RouteHandlers
 }
 
-func NewRoute() *Route {
+func newRoute() *Route {
 	r := new(Route)
 	r.isRoot = true
 	r.name = "_root_"
@@ -32,7 +32,7 @@ func NewRoute() *Route {
 }
 
 func (r *Route) Fork(name string) *Route {
-	child := NewRoute()
+	child := newRoute()
 	child.isRoot = false
 	child.name = name
 	child.parent = r
@@ -44,12 +44,6 @@ func (r *Route) Wildcard(name string) *Route {
 	fork := r.Fork(":" + name)
 	r.wildcard = fork
 	return fork
-}
-
-func (r *Route) ToHandler() (func (http.ResponseWriter, *http.Request)) {
-	return func (rw http.ResponseWriter, req *http.Request) {
-		r.parseRoute(rw, req)
-	}
 }
 
 func (r *Route) parseRoute(rw http.ResponseWriter, req *http.Request) {

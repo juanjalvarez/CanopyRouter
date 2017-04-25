@@ -8,8 +8,10 @@ import (
 
 func main(){
 
+	router := canopy.NewRouter()
+
 	// http://localhost:8080/
-	root := canopy.NewRoute()
+	root := router.Root
 
 	// GET http://localhost:8080/
 	root.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
@@ -44,7 +46,7 @@ func main(){
 		fmt.Printf("%v %s\n", methods, path)
 	})
 	println()
-	http.HandleFunc("/", root.ToHandler())
+	http.HandleFunc("/", router.Handler())
 	http.ListenAndServe(":8080", nil)
 
 }
