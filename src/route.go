@@ -79,6 +79,9 @@ func (r *Route) parseRoute(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Route) resolveRoute(stack []string, idx int, wildcards *Wildcards) *Route {
+	if len(stack) == 0 {
+		return r
+	}
 	cur := stack[idx]
 	isLast := idx == len(stack) - 1
 	child := r.children[cur]

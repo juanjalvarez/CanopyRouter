@@ -12,7 +12,7 @@ func main(){
 	root := canopy.NewRoute()
 
 	// GET http://localhost:8080/
-	root.registerHandler(canopy.GET), func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
+	root.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
 		(*rw).Write([]byte("Hello, world!"))
 	})
 
@@ -29,7 +29,7 @@ func main(){
 	status.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
 		(*rw).Write([]byte("Hello, " + w[":username"] +"!"))
 	})
-	
+
 	// Prints all registered routes and their methods
 	println()
 	root.Iterate(func (route *canopy.Route) {
