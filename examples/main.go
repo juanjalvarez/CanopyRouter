@@ -7,7 +7,7 @@ import (
 )
 
 func main(){
-	a := canopy.NewRouter()
+	a := canopy.NewRoute()
 	b := a.Fork("user")
 	c := b.Wildcard("username")
 	d := c.Fork("status")
