@@ -7,15 +7,32 @@ import (
 )
 
 func main(){
-	a := canopy.NewRoute()
-	b := a.Fork("user")
-	c := b.Wildcard("username")
-	d := c.Fork("status")
-	d.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
+
+	// http://localhost:8080/
+	root := canopy.NewRoute()
+
+	// GET http://localhost:8080/
+	root.registerHandler(canopy.GET), func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
+		(*rw).Write([]byte("Hello, world!"))
+	})
+
+	// http://localhost:8080/user
+	user := root.Fork("user")
+
+	// http://localhost:8080/user/:username
+	username := user.Wildcard("username")
+
+	// http://localhost:8080/user/:username/status
+	status := username.Fork("status")
+
+	// GET http://localhost:8080/user/:username/status
+	status.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
 		(*rw).Write([]byte("Hello, " + w[":username"] +"!"))
 	})
+	
+	// Prints all registered routes and their methods
 	println()
-	a.Iterate(func (route *canopy.Route) {
+	root.Iterate(func (route *canopy.Route) {
 		path := route.String()
 		var methods []string
 		if route.HasMethod(canopy.GET) {
@@ -27,6 +44,7 @@ func main(){
 		fmt.Printf("%v %s\n", methods, path)
 	})
 	println()
-	http.HandleFunc("/", a.ToHandler())
+	http.HandleFunc("/", root.ToHandler())
 	http.ListenAndServe(":8080", nil)
+
 }
