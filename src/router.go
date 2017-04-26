@@ -15,7 +15,7 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Handler() (func (http.ResponseWriter, *http.Request)) {
-	return func (rw http.ResponseWriter, req *http.Request) {
+	return http.HandlerFunc( func (rw http.ResponseWriter, req *http.Request) {
 		r.Root.parseRoute(rw, req)
-	}
+	})
 }

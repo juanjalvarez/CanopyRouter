@@ -35,7 +35,7 @@ func main(){
 	// Prints all registered routes and their methods
 	println()
 	root.Iterate(func (route *canopy.Route) {
-		path := route.String()
+		path := route.Path()
 		var methods []string
 		if route.HasMethod(canopy.GET) {
 			methods = append(methods, "GET")

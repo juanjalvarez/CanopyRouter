@@ -7,12 +7,15 @@ import (
 
 type Wildcards map[string]string
 
-type RouteHandler func(rw *http.ResponseWriter, req *http.Request, w Wildcards)
+type HttpHandler func (rw http.ResponseWriter, req *http.Request)
+
+type RouteHandler func (rw *http.ResponseWriter, req *http.Request, w Wildcards)
+
+type DirectoryHandler func (rw *http.ResponseWriter, req *http.Request, p string)
 
 type RouteHandlers [METHOD_COUNT]RouteHandler
 
 type Route struct {
-	isRoot bool
 	name string
 	parent *Route
 	children map[string]*Route
@@ -22,7 +25,6 @@ type Route struct {
 
 func newRoute() *Route {
 	r := new(Route)
-	r.isRoot = true
 	r.name = "_root_"
 	r.parent = nil
 	r.children = make(map[string]*Route)
@@ -33,7 +35,6 @@ func newRoute() *Route {
 
 func (r *Route) Fork(name string) *Route {
 	child := newRoute()
-	child.isRoot = false
 	child.name = name
 	child.parent = r
 	r.children[name] = child
@@ -111,15 +112,15 @@ func (r *Route) RegisterHandler(method int, handler RouteHandler) {
 	r.handlers[method] = handler
 }
 
-func (r *Route) String() string {
-	if r.isRoot {
+func (r *Route) Path() string {
+	if r.parent == nil {
 		return "/"
 	}else {
 		name := r.name
 		if len(r.children) > 0 {
 			name = name + "/"
 		}
-		return (*(r.parent)).String() + name
+		return (*(r.parent)).Path() + name
 	}
 }
 
