@@ -2,7 +2,6 @@ package canopy
 
 import (
 	"net/http"
-	"strings"
 )
 
 type Wildcards map[string]string
@@ -54,31 +53,6 @@ func (r *Route) Wildcard(name string) *Route {
 
 func (r *Route) Directory(b bool) {
 	r.isDirectory = b
-}
-
-func (r *Route) solve(rw http.ResponseWriter, req *http.Request) {
-	reqPath := req.URL.Path
-	path := strings.Split(reqPath, "/")
-	lo, hi := 0, len(path) - 1
-	if len(path[lo]) == 0 {
-		lo++
-	}
-	if len(path[hi]) == 0 {
-		hi--
-	}
-	path = path[lo:hi + 1]
-	params := r.parse(path, 0)
-	if params == nil {
-		rw.WriteHeader(404)
-	} else {
-		method := methodCode(req.Method)
-		handler := params.Route.handlers[method]
-		if handler != nil {
-			handler(&rw, req, params)
-		} else {
-			rw.WriteHeader(405)
-		}
-	}
 }
 
 func (r *Route) parse(stack []string, idx int) *RouteParameters {
