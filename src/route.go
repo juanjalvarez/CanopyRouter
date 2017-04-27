@@ -59,9 +59,15 @@ func (r *Route) parse(stack []string, idx int) *RouteParameters {
 	params := RouteParameters{
 		Route: r,
 		Wildcards: make(Wildcards),
-		RequestedPath: "/",
+		RequestedPath: "",
 	}
 	if len(stack) == idx {
+		return &params
+	}
+	if r.isDirectory {
+		for _, val := range(stack[idx:]){
+			params.RequestedPath = params.RequestedPath + "/" + val
+		}
 		return &params
 	}
 	cur := stack[idx]
