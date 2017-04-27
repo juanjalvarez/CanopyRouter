@@ -9,9 +9,7 @@ type Wildcards map[string]string
 
 type HttpHandler func (rw http.ResponseWriter, req *http.Request)
 
-type RouteHandler func (rw *http.ResponseWriter, req *http.Request, w Wildcards)
-
-type DirectoryHandler func (rw *http.ResponseWriter, req *http.Request, p string)
+type RouteHandler func (rw *http.ResponseWriter, req *http.Request, rp *RouteParameters)
 
 type RouteHandlers [METHOD_COUNT]RouteHandler
 
@@ -23,14 +21,18 @@ type Route struct {
 	handlers RouteHandlers
 }
 
+type RouteParameters struct {
+	Route *Route
+	Wildcards Wildcards
+}
+
 func newRoute() *Route {
-	r := new(Route)
-	r.name = "_root_"
-	r.parent = nil
-	r.children = make(map[string]*Route)
-	r.wildcard = nil
-	r.handlers = *(new(RouteHandlers))
-	return r
+	return &Route{
+		name: "_root_",
+		children: make(map[string]*Route),
+		wildcard: nil,
+		handlers: *(new(RouteHandlers)),
+	}
 }
 
 func (r *Route) Fork(name string) *Route {
@@ -58,6 +60,7 @@ func (r *Route) parseRoute(rw http.ResponseWriter, req *http.Request) {
 		hi--
 	}
 	path = path[lo:hi + 1]
+	routeParams :=
 	wildcards := (make(Wildcards))
 	route := r.resolveRoute(path, 0, &wildcards)
 	if route == nil {
@@ -110,6 +113,14 @@ func (r *Route) HasMethod(method int) bool {
 
 func (r *Route) RegisterHandler(method int, handler RouteHandler) {
 	r.handlers[method] = handler
+}
+
+func (r *Route) GET(handler RouteHandler) {
+	r.handlers[GET] = handler
+}
+
+func (r *Route) POST(handler RouteHandler) {
+	r.handlers[POST] = handler
 }
 
 func (r *Route) Path() string {

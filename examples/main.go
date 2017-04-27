@@ -14,7 +14,7 @@ func main(){
 	root := router.Root
 
 	// GET http://localhost:8080/
-	root.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
+	root.GET(func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
 		(*rw).Write([]byte("Hello, world!"))
 	})
 
@@ -28,7 +28,7 @@ func main(){
 	status := username.Fork("status")
 
 	// GET http://localhost:8080/user/:username/status
-	status.RegisterHandler(canopy.GET, func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
+	status.GET(func (rw *http.ResponseWriter, req *http.Request, w canopy.Wildcards) {
 		(*rw).Write([]byte("Hello, " + w[":username"] +"!"))
 	})
 
