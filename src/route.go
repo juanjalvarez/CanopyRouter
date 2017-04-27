@@ -6,8 +6,6 @@ import (
 
 type Wildcards map[string]string
 
-type HttpHandler func (rw http.ResponseWriter, req *http.Request)
-
 type RouteHandler func (rw *http.ResponseWriter, req *http.Request, rp *RouteParameters)
 
 type RouteHandlers [METHOD_COUNT]RouteHandler

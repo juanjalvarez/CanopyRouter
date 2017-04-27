@@ -5,14 +5,19 @@ import (
 	"strings"
 )
 
+type HttpHandler func (rw http.ResponseWriter, req *http.Request)
+
 type Router struct {
 	Root *Route
+	errHandler *[600]HttpHandler
 }
 
 func NewRouter() *Router {
-	r := new(Router)
-	r.Root = newRoute()
-	return r
+	m := new([600]HttpHandler)
+	return &Router{
+		Root: newRoute(),
+		errHandler: m,
+	}
 }
 
 func (r *Router) Handler() HttpHandler {
@@ -34,14 +39,27 @@ func (r *Router) solve(rw http.ResponseWriter, req *http.Request) {
 	path = path[lo:hi + 1]
 	params := r.Root.parse(path, 0)
 	if params == nil {
-		rw.WriteHeader(404)
+		r.Error(404, rw, req)
 	} else {
 		method := methodCode(req.Method)
 		handler := params.Route.handlers[method]
 		if handler != nil {
 			handler(&rw, req, params)
 		} else {
-			rw.WriteHeader(405)
+			r.Error(405, rw, req)
 		}
+	}
+}
+
+func (r *Router) OnError(code int, handler HttpHandler) {
+	(*r.errHandler)[code] = handler
+}
+
+func (r *Router) Error(code int, rw http.ResponseWriter, req *http.Request) {
+	handler := (*r.errHandler)[code]
+	if handler == nil {
+		rw.WriteHeader(code)
+	} else {
+		handler(rw, req)
 	}
 }

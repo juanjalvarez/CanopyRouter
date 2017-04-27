@@ -44,6 +44,16 @@ func main(){
 		(*rw).Write([]byte("Hello, " + rp.Wildcards[":username"] +"!"))
 	})
 
+	// Error 404 handler
+	router.OnError(404, func (rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(req.URL.Path + " does not exist, 404."))
+	})
+
+	// Error 405 handler
+	router.OnError(405, func (rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(req.URL.Path + " does not contain a controller for the " + req.Method + " method."))
+	})
+
 	// Prints all registered routes and their methods
 	println()
 	root.Iterate(func (route *canopy.Route) {
