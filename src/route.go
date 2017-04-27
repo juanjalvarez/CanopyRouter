@@ -78,8 +78,14 @@ func (r *Route) parse(router *Router, context *RouteContext) *RouteParameters {
 		return &params
 	}
 	if r.isDirectory {
-		for _, val := range(stack[context.idx:]){
-			params.RequestedPath = params.RequestedPath + val + "/"
+		for index, val := range(stack[context.idx:]){
+			if(index != 0) {
+				params.RequestedPath += "/"
+			}
+			params.RequestedPath += val
+		}
+		if context.endSlash {
+			params.RequestedPath += "/"
 		}
 		return &params
 	}
