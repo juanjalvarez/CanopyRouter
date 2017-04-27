@@ -8,7 +8,7 @@ import (
 
 func main(){
 
-	router := canopy.NewRouter()
+	router := canopy.NewRouter(nil)
 
 	// http://localhost:8080/
 	root := router.Root

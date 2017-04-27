@@ -19,10 +19,24 @@ type Route struct {
 	handlers RouteHandlers
 }
 
+type RouteContext struct {
+	stack *[]string
+	idx int
+	endSlash bool
+}
+
 type RouteParameters struct {
 	Route *Route
 	Wildcards Wildcards
 	RequestedPath string
+}
+
+func (rc *RouteContext) next() *RouteContext {
+	return &RouteContext{
+		stack: rc.stack,
+		idx: rc.idx + 1,
+		endSlash: rc.endSlash,
+	}
 }
 
 func newRoute() *Route {
@@ -53,33 +67,37 @@ func (r *Route) Directory(b bool) {
 	r.isDirectory = b
 }
 
-func (r *Route) parse(stack []string, idx int) *RouteParameters {
+func (r *Route) parse(router *Router, context *RouteContext) *RouteParameters {
 	params := RouteParameters{
 		Route: r,
 		Wildcards: make(Wildcards),
-		RequestedPath: "",
+		RequestedPath: "/",
 	}
-	if len(stack) == idx {
+	stack := *context.stack
+	if len(stack) == context.idx {
 		return &params
 	}
 	if r.isDirectory {
-		for _, val := range(stack[idx:]){
-			params.RequestedPath = params.RequestedPath + "/" + val
+		for _, val := range(stack[context.idx:]){
+			params.RequestedPath = params.RequestedPath + val + "/"
 		}
 		return &params
 	}
-	cur := stack[idx]
+	cur := stack[context.idx]
 	child := r.children[cur]
 	if child == nil {
 		if r.wildcard != nil {
-			p := r.wildcard.parse(stack, idx + 1)
-			p.Wildcards[r.wildcard.name]=stack[idx]
+			p := r.wildcard.parse(router, context.next())
+			if p == nil {
+				return nil
+			}
+			p.Wildcards[r.wildcard.name]=stack[context.idx]
 			return p
 		} else {
 			return nil
 		}
 	} else {
-		return child.parse(stack, idx + 1)
+		return child.parse(router, context.next())
 	}
 }
 

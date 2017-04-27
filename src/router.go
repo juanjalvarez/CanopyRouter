@@ -9,13 +9,25 @@ type HttpHandler func (rw http.ResponseWriter, req *http.Request)
 
 type Router struct {
 	Root *Route
+	Config *RouterConfig
 	errHandler *[600]HttpHandler
 }
 
-func NewRouter() *Router {
+type RouterConfig struct {
+	SensitiveSlashes bool
+}
+
+func NewRouter(config *RouterConfig) *Router {
 	m := new([600]HttpHandler)
+	c := config
+	if c == nil {
+		c = &RouterConfig{
+			SensitiveSlashes: false,
+		}
+	}
 	return &Router{
 		Root: newRoute(),
+		Config: c,
 		errHandler: m,
 	}
 }
@@ -33,11 +45,17 @@ func (r *Router) solve(rw http.ResponseWriter, req *http.Request) {
 	if len(path[lo]) == 0 {
 		lo++
 	}
+	context := &RouteContext{
+		stack: &path,
+		idx: 0,
+		endSlash: false,
+	}
 	if len(path[hi]) == 0 {
 		hi--
+		context.endSlash = true
 	}
 	path = path[lo:hi + 1]
-	params := r.Root.parse(path, 0)
+	params := r.Root.parse(r, context)
 	if params == nil {
 		r.Error(404, rw, req)
 	} else {
