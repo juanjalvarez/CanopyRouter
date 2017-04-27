@@ -16,6 +16,6 @@ func NewRouter() *Router {
 
 func (r *Router) Handler() HttpHandler {
 	return HttpHandler(http.HandlerFunc( func (rw http.ResponseWriter, req *http.Request) {
-		r.Root.parseRoute(rw, req)
+		r.Root.solve(rw, req)
 	}))
 }

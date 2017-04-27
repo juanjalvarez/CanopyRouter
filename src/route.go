@@ -18,12 +18,14 @@ type Route struct {
 	parent *Route
 	children map[string]*Route
 	wildcard *Route
+	isDirectory bool
 	handlers RouteHandlers
 }
 
 type RouteParameters struct {
 	Route *Route
 	Wildcards Wildcards
+	RequestedPath string
 }
 
 func newRoute() *Route {
@@ -31,6 +33,7 @@ func newRoute() *Route {
 		name: "_root_",
 		children: make(map[string]*Route),
 		wildcard: nil,
+		isDirectory: false,
 		handlers: *(new(RouteHandlers)),
 	}
 }
@@ -49,7 +52,11 @@ func (r *Route) Wildcard(name string) *Route {
 	return fork
 }
 
-func (r *Route) parseRoute(rw http.ResponseWriter, req *http.Request) {
+func (r *Route) Directory(b bool) {
+	r.isDirectory = b
+}
+
+func (r *Route) solve(rw http.ResponseWriter, req *http.Request) {
 	reqPath := req.URL.Path
 	path := strings.Split(reqPath, "/")
 	lo, hi := 0, len(path) - 1
@@ -60,46 +67,41 @@ func (r *Route) parseRoute(rw http.ResponseWriter, req *http.Request) {
 		hi--
 	}
 	path = path[lo:hi + 1]
-	routeParams :=
-	wildcards := (make(Wildcards))
-	route := r.resolveRoute(path, 0, &wildcards)
-	if route == nil {
+	params := r.parse(path, 0)
+	if params == nil {
 		rw.WriteHeader(404)
 	} else {
 		method := methodCode(req.Method)
-		handler := route.handlers[method]
+		handler := params.Route.handlers[method]
 		if handler != nil {
-			handler(&rw, req, wildcards)
+			handler(&rw, req, params)
 		} else {
 			rw.WriteHeader(405)
 		}
 	}
 }
 
-func (r *Route) resolveRoute(stack []string, idx int, wildcards *Wildcards) *Route {
-	if len(stack) == 0 {
-		return r
+func (r *Route) parse(stack []string, idx int) *RouteParameters {
+	params := RouteParameters{
+		Route: r,
+		Wildcards: make(Wildcards),
+		RequestedPath: "/",
+	}
+	if len(stack) == idx {
+		return &params
 	}
 	cur := stack[idx]
-	isLast := idx == len(stack) - 1
 	child := r.children[cur]
 	if child == nil {
 		if r.wildcard != nil {
-			(*wildcards)[r.wildcard.name]=stack[idx]
-			if isLast {
-				return r.wildcard
-			} else {
-				return r.wildcard.resolveRoute(stack, idx + 1, wildcards)
-			}
+			p := r.wildcard.parse(stack, idx + 1)
+			p.Wildcards[r.wildcard.name]=stack[idx]
+			return p
 		} else {
 			return nil
 		}
 	} else {
-		if isLast {
-			return child
-		} else {
-			return child.resolveRoute(stack, idx + 1, wildcards)
-		}
+		return child.parse(stack, idx + 1)
 	}
 }
 
