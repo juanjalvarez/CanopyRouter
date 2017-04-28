@@ -68,26 +68,29 @@ func (r *Route) Directory(b bool) {
 }
 
 func (r *Route) parse(router *Router, context *RouteContext) *RouteParameters {
-	params := RouteParameters{
-		Route: r,
-		Wildcards: make(Wildcards),
-		RequestedPath: "/",
-	}
 	stack := *context.stack
-	if len(stack) == context.idx {
-		return &params
-	}
-	if r.isDirectory {
-		for index, val := range(stack[context.idx:]){
-			if(index != 0) {
+	if len(stack) == context.idx || r.isDirectory {
+		params := RouteParameters{
+			Route: r,
+			Wildcards: make(Wildcards),
+			RequestedPath: "/",
+		}
+		if len(stack) == context.idx {
+			// Trailing slash code
+			return &params
+		}
+		if r.isDirectory {
+			for index, val := range(stack[context.idx:]){
+				if(index != 0) {
+					params.RequestedPath += "/"
+				}
+				params.RequestedPath += val
+			}
+			if context.endSlash {
 				params.RequestedPath += "/"
 			}
-			params.RequestedPath += val
+			return &params
 		}
-		if context.endSlash {
-			params.RequestedPath += "/"
-		}
-		return &params
 	}
 	cur := stack[context.idx]
 	child := r.children[cur]
