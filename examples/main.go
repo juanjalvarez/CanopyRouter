@@ -22,6 +22,11 @@ func main(){
 	// http://localhost:8080/user
 	user := root.Fork("user")
 
+	userSlash := user.Fork("")
+	userSlash.GET(func (rw *http.ResponseWriter, req *http.Request, rp *canopy.RouteParameters) {
+		(*rw).Write([]byte("User Slash Works!"))
+	})
+
 	// Wildcard example
 	// http://localhost:8080/user/:username
 	username := user.Wildcard("username")

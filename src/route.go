@@ -41,7 +41,7 @@ func (rc *RouteContext) next() *RouteContext {
 
 func newRoute() *Route {
 	return &Route{
-		name: "_root_",
+		name: "",
 		children: make(map[string]*Route),
 		wildcard: nil,
 		isDirectory: false,
@@ -76,7 +76,15 @@ func (r *Route) parse(router *Router, context *RouteContext) *RouteParameters {
 			RequestedPath: "/",
 		}
 		if len(stack) == context.idx {
-			// Trailing slash code
+			if context.endSlash && router.Config.SensitiveSlashes {
+				child := r.children[""]
+				if child == nil {
+					return nil
+				} else {
+					params.Route = child
+					return &params
+				}
+			}
 			return &params
 		}
 		if r.isDirectory {
@@ -135,8 +143,8 @@ func (r *Route) Path() string {
 		return "/"
 	}else {
 		name := r.name
-		if len(r.children) > 0 {
-			name = name + "/"
+		if r.parent.parent != nil {
+			name = "/" + name
 		}
 		return (*(r.parent)).Path() + name
 	}
